@@ -1,23 +1,6 @@
-// cohort name
-// challenge name
-// branch name -> compare to main first, and then every other branch?
-
-// check function to compare two branches for overlapping code
-// ignore files that are not .js/.jsx/.ts/.tsx/.hbs
-// ignore loc that are from original challenge files
-
-// what does output look like?
-// ---------------------------
-// Challenge: memory
-// Branch: rohan-x
-// Cohort: Aihe 2021
-// File: src/components/Board.js
-// Turnitin: 0.7
-// blah blah blah
 import 'dotenv/config'
-import fetch from 'node-fetch'
 import { github } from './utils/github'
-import { cohort, challenge } from './config'
+import { cohort, challenge, branch as branchToCompare } from './config'
 import invariant from 'tiny-invariant'
 
 // TODO: get these from args and fallback to defaults if --default/-D flag is given
@@ -46,13 +29,14 @@ export const getDiff = async ({ branch }: { branch: string }) => {
   const filesArray = data.files
     .filter((f) => f && !excludedFiles.includes(f.filename))
     .map((f) => ({
-      filename: f.filename,
+      filename: f.status === 'renamed' ? f.previous_filename! : f.filename,
       diff: {
-        raw: f.patch,
+        patch: f.patch,
         additions: f.patch
           ?.split('\n')
           .filter((l) => l.startsWith('+'))
           .map((l) => l.slice(1)),
+        numberOfAdditions: f.additions,
       },
     }))
 
@@ -60,13 +44,16 @@ export const getDiff = async ({ branch }: { branch: string }) => {
   const fileMap = new Map<FileDiff['filename'], FileDiff['diff']>()
 
   filesArray.forEach((f) => {
-    if (f.diff.raw) {
-      fileMap.set(f.filename, f.diff)
-    }
+    fileMap.set(f.filename, f.diff)
   })
 
-  return fileMap
+  return {
+    name: branch,
+    files: fileMap,
+  }
 }
+
+export type FilesDiff = Awaited<ReturnType<typeof getDiff>>
 
 export default async function main() {
   const { data: branches } = await github.rest.repos.listBranches({
@@ -74,62 +61,60 @@ export default async function main() {
   })
   const branchNames = branches.map((b) => b.name)
 
-  // TODO: get this from args
-  const branchToCompare = 'rohan'
-
-  for (const branch of branchNames) {
-    if (branch !== branchToCompare && branch !== 'main') {
-      compareTwoBranches(branch, branchToCompare)
+  for (const currBranch of branchNames) {
+    if (currBranch !== branchToCompare && currBranch !== 'main') {
+      compareTwoBranches(branchToCompare, currBranch)
     }
   }
 }
 
 export const compareTwoBranches = async (from: string, to: string) => {
-  const diff1 = await getDiff({ branch: from })
-  const diff2 = await getDiff({ branch: to })
-
-  invariant(diff1, `${from} returned a null diff`)
-  invariant(diff2, `${to} returned a null diff`)
+  // TODO: get base once, instead of in each comparison
+  const base = await getDiff({ branch: from })
+  const comparison = await getDiff({ branch: to })
+  invariant(base?.files, `${base?.name} returned a null diff`)
+  invariant(comparison, `${comparison?.name} returned a null diff`)
 
   let totalNOverlaps = 0
-  for (const [filename, diff1Patch] of diff1.entries()) {
-    const diff2Patch = diff2.get(filename)
+  for (const [filename, baseDiff] of base.files) {
+    const comparisonDiff = comparison.files.get(filename)
 
-    if (!diff2Patch) {
+    if (!comparisonDiff) {
       continue
     }
 
-    const diff1Lines = diff1Patch.additions
-    const diff2Lines = diff2Patch.additions
+    const baseAdditions = baseDiff.additions
+    const comparisonAdditions = comparisonDiff.additions
 
-    invariant(diff1Lines, `no additions for ${from} -> ${filename}`)
-    invariant(diff2Lines, `no additions for ${to} -> ${filename}`)
+    invariant(baseAdditions, `no additions for ${base.name} -> ${filename}`)
+    invariant(
+      comparisonAdditions,
+      `no additions for ${comparison.name} -> ${filename}`
+    )
 
     let nOverlaps = 0
-    for (const line of diff1Lines) {
+    for (const line of baseAdditions) {
       /**
        * TODO: use a real algo
        * this is just a naive approach for now; most lines with just '}' will match
        */
-      if (diff2Lines.includes(line)) {
+      if (comparisonAdditions.includes(line)) {
         nOverlaps++
       }
     }
     console.log(
-      `${filename}: ${nOverlaps}/${
-        diff1Patch.additions?.length
-      } additions overlap in a file with ${
-        diff1Patch.raw?.split('\n').length
-      } lines`
+      `${filename}: ${nOverlaps}/${baseDiff.numberOfAdditions} additions overlap`
     )
     totalNOverlaps += nOverlaps
   }
-  const totalLines = Array.from(diff1.values()).reduce(
-    (acc, curr) => acc + (curr.additions?.length ?? 0),
-    0
-  )
+
+  let totalAdditions = 0
+  for (const [, diff] of base.files) {
+    totalAdditions += diff.numberOfAdditions
+  }
+
   console.log(
-    `Total overlaps, ${from} -> ${to}: ${totalNOverlaps}/${totalLines}\n`
+    `Total overlaps, ${base.name} -> ${comparison.name}: ${totalNOverlaps}/${totalAdditions}\n`
   )
 }
 
