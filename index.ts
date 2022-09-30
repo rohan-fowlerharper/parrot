@@ -20,6 +20,7 @@ import { github } from './utils/github'
 import { cohort, challenge } from './config'
 import invariant from 'tiny-invariant'
 
+// TODO: get these from args and fallback to defaults if --default/-D flag is given
 const defaultOptions = {
   owner: cohort,
   repo: challenge,
@@ -73,6 +74,7 @@ export default async function main() {
   })
   const branchNames = branches.map((b) => b.name)
 
+  // TODO: get this from args
   const branchToCompare = 'rohan'
 
   for (const branch of branchNames) {
