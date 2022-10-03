@@ -1,10 +1,5 @@
-
 import { FilesDiff, getDiff, github, GithubOptions } from '../utils/github'
 import invariant from 'tiny-invariant'
-
-
-
-console.log(process.env.GITHUB_TOKEN)
 
 /**
  * usage:

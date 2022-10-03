@@ -1,11 +1,8 @@
 #!/usr/bin/env ts-node
-
-console.log(process.env.GITHUB_ACCESS_TOKEN)
-
 import main from './src/commands/main'
 import init from './src/commands/init'
 import appName from './src/app-name'
-import { extractArgs } from './src/extract-from-url'
+import { extractArgs } from './src/utils/extract-from-url'
 import yargs from 'yargs'
 import invariant from 'tiny-invariant'
 
@@ -49,7 +46,7 @@ yargs(process.argv.slice(2))
   )
   .command(
     'init [token]',
-    'initialize a new parrot config file',
+    `initialize a new ${appName} config file`,
     (yargs) => {
       yargs
         .option('token', {

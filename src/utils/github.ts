@@ -1,8 +1,8 @@
 import { Octokit } from '@octokit/rest'
-import invariant from 'tiny-invariant'
+import appName from '../app-name'
 import * as dotenv from 'dotenv'
 dotenv.config({
-  path: process.env.HOME + '/.parrot/.env',
+  path: process.env.HOME + `/.${appName}/.env`,
 })
 
 const githubAccessToken = process.env.GITHUB_ACCESS_TOKEN
