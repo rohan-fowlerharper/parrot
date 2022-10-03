@@ -25,6 +25,12 @@ yargs(process.argv.slice(2))
           describe: `branch to compare against
         only required if branch name not in url`,
         })
+        .option('verbose', {
+          alias: 'v',
+          type: 'boolean',
+          default: false,
+          description: 'show more output',
+        })
     },
     (argv) => {
       // NOTE: this is a bit of a hack to process args, I'm sure yargs lets us do this with middleware
@@ -41,6 +47,9 @@ yargs(process.argv.slice(2))
         org,
         repo,
         branch,
+        flags: {
+          verbose: argv.verbose as boolean,
+        },
       })
     }
   )
