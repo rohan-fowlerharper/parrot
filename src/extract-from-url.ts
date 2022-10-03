@@ -1,4 +1,15 @@
-export const extractArgs = (rawUrl: string) => {
+/**
+ * takes a github url and extracts the org, repo, and branch (if available)
+ * @param rawUrl
+ * @returns org: string, repo: string, branch?: string
+ */
+export const extractArgs = (
+  rawUrl: string
+): {
+  org: string
+  repo: string
+  branch?: string
+} => {
   const url = new URL(rawUrl)
   const paths = url.pathname.split('/')
   paths.shift() // remove empty string

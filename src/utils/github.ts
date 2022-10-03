@@ -1,8 +1,14 @@
 import { Octokit } from '@octokit/rest'
 import invariant from 'tiny-invariant'
+import * as dotenv from 'dotenv'
+dotenv.config({
+  path: process.env.HOME + '/.parrot/.env',
+})
 
 const githubAccessToken = process.env.GITHUB_ACCESS_TOKEN
-invariant(githubAccessToken, 'GITHUB_ACCESS_TOKEN is required')
+if (!githubAccessToken) {
+  console.warn('No github access token found, please run `parrot init [token]`')
+}
 export const github = new Octokit({ auth: githubAccessToken })
 
 export type GithubOptions = {

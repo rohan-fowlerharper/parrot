@@ -1,6 +1,10 @@
-import 'dotenv/config'
-import { FilesDiff, getDiff, github, GithubOptions } from './utils/github'
+
+import { FilesDiff, getDiff, github, GithubOptions } from '../utils/github'
 import invariant from 'tiny-invariant'
+
+
+
+console.log(process.env.GITHUB_TOKEN)
 
 /**
  * usage:
@@ -29,7 +33,7 @@ export default async function main({
 
   for (const curr of branchNames) {
     if (curr !== branchToCompare && curr !== 'main') {
-      // TODO: collect results with Promise.all instead of logging here
+      // TODO: collect results with Promise.all instead of logging inside function
       // TODO: report on any branches with alerting numbers of overlaps >60% or greatest overlap?
       _compareTwoBranches(base, curr, githubOptions)
     }
