@@ -64,11 +64,9 @@ export const _compareTwoBranches = async (
     const baseAdditions = baseDiff.additions
     const comparisonAdditions = comparisonDiff.additions
 
-    invariant(baseAdditions, `no additions for ${base.name} -> ${filename}`)
-    invariant(
-      comparisonAdditions,
-      `no additions for ${comparison.name} -> ${filename}`
-    )
+    if (!baseAdditions || !comparisonAdditions) {
+      continue
+    }
 
     let nOverlaps = 0
     for (const line of baseAdditions) {
@@ -101,9 +99,12 @@ export const _compareTwoBranches = async (
       `${totalNOverlaps}/${totalAdditions} :: ${(
         (totalNOverlaps / totalAdditions) *
         100
-      ).toFixed(1)}%${flags.verbose && '\n'}`
+      ).toFixed(1)}%`
     )}`
   )
+  if (flags.verbose) {
+    console.log()
+  }
 }
 
 const getColor = (nOverlaps: number, totalAdditions: number) => {
