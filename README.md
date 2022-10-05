@@ -31,6 +31,7 @@ parrot <url> [branch] [options] # branch is optional if you provide a url with a
 ## Options
 
 - `--verbose`, `-v`: Show more information in logs (default: `false`)'
+- '--all', '-A': Compare all branches to all other branches (overrides any branch provided) (default: `false`)
 
 ## Example Usage
 
@@ -51,6 +52,15 @@ Format:
 17.4% :: 49/281  :: rohan --- tweety
 66.9% :: 241/360 :: rohan --- jv-solution
 94.7% :: 266/281 :: rohan --- captain-hook
+```
+
+Other example inputs:
+```sh
+# for lots of console.log spam
+parrot https://github.com/aihe-2021/todo-full-stack/tree/rohan --verbose
+
+# to compare all branches with every other branch
+parrot https://github.com/aihe-2021/todo-full-stack --all
 ```
 
 Higher percentage means greater overlap between the two solutions/commits. Copied branches tend to have >60% overlap.
