@@ -42,14 +42,15 @@ parrot https://github.com/aihe-2021/todo-full-stack/tree/rohan
 Output:
 ```sh
 Format:
-[branch] <-> [branch]: [n overlaps]/[n total lines added] :: [overlap as %]
+[overlap as %] :: [n overlaps]/[n total lines added] :: [branch 1] --- [branch 2]
 
-rohan <-> tweety: 61/711 :: 8.6%
-rohan <-> jv-solution: 67/711 :: 9.4%
-rohan <-> coco: 111/711 :: 15.6%
-rohan <-> buddy: 100/711 :: 14.1%
-rohan <-> lucky: 0/711 :: 0.0%
-rohan <-> sunny: 59/711 :: 8.3%
+16.2% :: 73/450  :: rohan --- polly:
+16.4% :: 46/281  :: rohan --- wanna:
+16.7% :: 47/281  :: rohan --- cracka
+17.1% :: 48/281  :: rohan --- rodrigo-the-bird
+17.4% :: 49/281  :: rohan --- tweety
+66.9% :: 241/360 :: rohan --- jv-solution
+94.7% :: 266/281 :: rohan --- captain-hook
 ```
 
 Higher percentage means greater overlap between the two solutions/commits. Copied branches tend to have >60% overlap.

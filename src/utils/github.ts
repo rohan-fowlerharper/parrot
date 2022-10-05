@@ -14,18 +14,20 @@ export const github = new Octokit({ auth: githubAccessToken })
 export type GithubOptions = {
   owner: string
   repo: string
-  base: 'main' | 'dev'
+  base?: string
 }
 
 export type FilesDiff = Awaited<ReturnType<typeof getDiff>>
 export const getDiff = async (branch: string, options: GithubOptions) => {
+  if (branch === options.base) return null
   const { data } = await github.rest.repos.compareCommits({
-    ...options,
+    base: 'main',
     head: branch,
     mediaType: {
       format: 'diff',
       previews: ['application/vnd.github.v3.diff'],
     },
+    ...options,
   })
 
   if (!data.files || data.files?.length === 0) {
@@ -58,4 +60,13 @@ export const getDiff = async (branch: string, options: GithubOptions) => {
     name: branch,
     files: fileMap,
   }
+}
+
+export const getBranchNames = async (owner: string, repo: string) => {
+  const { data: branches } = await github.rest.repos.listBranches({
+    owner,
+    repo,
+  })
+
+  return branches.map((b) => b.name)
 }
