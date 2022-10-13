@@ -1,7 +1,6 @@
 import { getBranchNames, getDiff } from '../utils/github'
 import { compareTwoBranches, filterNullDiffs } from '../utils/compare'
 import chalk from 'chalk'
-import { endLog, logComparisonResults } from '../utils/chalkies'
 import { sortByRatio } from '../utils/formatters'
 
 /**
@@ -47,16 +46,5 @@ export default async function compareOne({
 
   comparisons.sort(sortByRatio)
 
-  logComparisonResults(comparisons)
-
-  endLog(() => {
-    const maxComparison = comparisons.at(-1)
-    if (!maxComparison) return ''
-    const baseLink = `https://github.com/${owner}/${repo}/compare/`
-    const link = `${baseLink}${maxComparison?.base.name}...${maxComparison?.comparison.name}`
-    const invertedLink = `${baseLink}${maxComparison?.comparison.name}...${maxComparison?.base.name}`
-    return `See the most similar branch here:
-    ${link}
-    ${invertedLink}`
-  })
+  return comparisons
 }

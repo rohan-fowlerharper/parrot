@@ -75,3 +75,20 @@ export const compareTwoBranches = (
 export const filterNullDiffs = <T>(diffs: T[]) => {
   return diffs.filter((d): d is NonNullable<T> => d !== null)
 }
+
+export const createCompareLinks = ({
+  org,
+  repo,
+  comparison,
+}: {
+  org: string
+  repo: string
+  comparison: BranchComparison
+}) => {
+  const baseUrl = `https://github.com/${org}/${repo}/compare/`
+
+  return [
+    `${baseUrl}main...${comparison.base.name}`,
+    `${baseUrl}main...${comparison.comparison.name}`,
+  ]
+}

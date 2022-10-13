@@ -5,17 +5,16 @@ import {
   compareTwoBranches,
   filterNullDiffs,
 } from '../utils/compare'
-import { endLog, logComparisonResults } from '../utils/chalkies'
 import { sortByRatio } from '../utils/formatters'
 
 export default async function compareAll({
   owner,
   repo,
-  flags,
+  flags = { verbose: false },
 }: {
   owner: string
   repo: string
-  flags: {
+  flags?: {
     verbose: boolean
   }
 }) {
@@ -43,16 +42,5 @@ export default async function compareAll({
 
   comparisons.sort(sortByRatio)
 
-  logComparisonResults(comparisons)
-
-  endLog(() => {
-    const maxComparison = comparisons.at(-1)
-    if (!maxComparison) return ''
-    const baseLink = `https://github.com/${owner}/${repo}/compare/`
-    const link = `${baseLink}${maxComparison?.base.name}...${maxComparison?.comparison.name}`
-    const invertedLink = `${baseLink}${maxComparison?.comparison.name}...${maxComparison?.base.name}`
-    return `Here's a link to the comparisons for the most similar branches:
-    ${link}
-    ${invertedLink}`
-  })
+  return comparisons
 }

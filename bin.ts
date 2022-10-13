@@ -3,10 +3,12 @@ import compareOne from './src/commands/compare-one'
 import init from './src/commands/init'
 import compareAll from './src/commands/compare-all'
 import appName from './src/app-name'
-import { extractArgs } from './src/utils/extract-from-url'
+import { processGithubUrl } from './src/utils/github'
 import yargs from 'yargs'
 import invariant from 'tiny-invariant'
 import chalk from 'chalk'
+import { endLog, logComparisonResults } from './src/utils/chalkies'
+import { BranchComparison, createCompareLinks } from './src/utils/compare'
 
 yargs(process.argv.slice(2))
   .usage(`Usage: ${appName ?? '$0'} <url> [branch]`)
@@ -26,6 +28,7 @@ yargs(process.argv.slice(2))
           type: 'string',
           describe: `branch to compare against
         only required if branch name not in url`,
+          demandOption: true,
         })
         .option('verbose', {
           alias: 'v',
@@ -40,44 +43,60 @@ yargs(process.argv.slice(2))
           description: 'compare all branches of the given repo',
         })
     },
-    (argv) => {
-      let { org, repo, branch } = extractArgs(argv.url as string)
+    async (argv) => {
+      const url = argv.url as string
+      let { org, repo, branch } = processGithubUrl(url)
 
       invariant(org, 'No org found in url 🤷')
       invariant(repo, 'No repo found in url 🤷')
 
-      if (argv.all as boolean) {
+      let comparisons: BranchComparison[] = []
+
+      const shouldCompareAll = argv.all as boolean
+      if (shouldCompareAll) {
         if (branch || argv.branch) {
           console.warn(
             chalk.yellow`🦜: Ignoring branch paramater when using --all | -A`
           )
         }
-        compareAll({
+        comparisons = await compareAll({
           owner: org,
           repo,
           flags: {
             verbose: argv.verbose as boolean,
           },
         })
-        return
+      } else {
+        if (!branch) {
+          branch = argv.branch as string | undefined
+        }
+
+        invariant(
+          branch,
+          chalk.red`🦜: I couldn't find a branch, if you would like to compare all branches, use the --all | -A flag`
+        )
+
+        comparisons = await compareOne({
+          owner: org,
+          repo,
+          branch,
+          flags: {
+            verbose: argv.verbose as boolean,
+          },
+        })
       }
 
-      if (!branch) {
-        branch = argv.branch as string | undefined
-      }
+      logComparisonResults(comparisons)
 
-      invariant(
-        branch,
-        chalk.red`🦜: I couldn't find a branch, if you would like to compare all branches, use the --all | -A flag`
-      )
-
-      compareOne({
-        owner: org,
-        repo,
-        branch,
-        flags: {
-          verbose: argv.verbose as boolean,
-        },
+      endLog(() => {
+        const maxComparison = comparisons.at(-1)
+        if (!maxComparison) return ''
+        const links = createCompareLinks({
+          org,
+          repo,
+          comparison: maxComparison,
+        })
+        return `Here's a link to the comparisons for the most similar branches:\n${links[0]}\n${links[1]}`
       })
     }
   )
