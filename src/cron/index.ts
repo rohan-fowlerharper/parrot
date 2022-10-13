@@ -3,6 +3,7 @@
 // for each repo name, check that it is a challenge repo
 // run compareAll on each challenge repo
 
+import chalk from 'chalk'
 import { EmbedBuilder, WebhookClient } from 'discord.js'
 import compareAll from '../commands/compare-all'
 import { logComparisonResults } from '../utils/chalkies'
@@ -57,6 +58,7 @@ export default async function run(cohort: string) {
     comparisons: c.comparisons.slice(-5),
   }))
 
+  console.log(chalk` {bold 🦜: {bold.green ${cohort}}`)
   topComparisons.forEach((c) => logComparisonResults(c.comparisons))
 
   const alarmBellComparisons = topComparisons

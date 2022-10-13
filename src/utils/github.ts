@@ -6,7 +6,6 @@ dotenv.config({
 })
 
 const githubAccessToken = process.env.GITHUB_ACCESS_TOKEN
-console.log(githubAccessToken)
 if (!githubAccessToken) {
   console.warn('No github access token found, please run `parrot init [token]`')
 }

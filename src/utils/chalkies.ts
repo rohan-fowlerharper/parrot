@@ -2,7 +2,18 @@ import chalk from 'chalk'
 import type { BranchComparison } from './compare'
 import { getColor, toFraction, toPercentage } from './formatters'
 
-export const logComparisonResults = (comparisons: BranchComparison[]) => {
+type ExtendedBranchComparison = BranchComparison & {
+  repo?: string
+}
+
+export const logComparisonResults = (
+  comparisons: ExtendedBranchComparison[]
+) => {
+  if (comparisons[0]?.repo) {
+    console.log(
+      chalk`{bold 🦜: Comparison for {green ${comparisons.length}} branches} in {bold.green ${comparisons[0].repo}}`
+    )
+  }
   comparisons.forEach((diff) => {
     console.log(
       chalk`${getColor(diff.ratio)(
