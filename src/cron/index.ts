@@ -58,7 +58,7 @@ export default async function run(cohort: string) {
     comparisons: c.comparisons.slice(-5),
   }))
 
-  console.log(chalk` {bold 🦜: {bold.green ${cohort}}`)
+  console.log(chalk` {bold 🦜: {bold.green ${cohort}}}`)
   topComparisons.forEach((c) => logComparisonResults(c.comparisons))
 
   const alarmBellComparisons = topComparisons
