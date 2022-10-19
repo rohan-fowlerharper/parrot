@@ -1,8 +1,3 @@
-// get active cohort names
-// for each cohort name, fetch repo names that have had pushes in the last 24 hours
-// for each repo name, check that it is a challenge repo
-// run compareAll on each challenge repo
-
 import chalk from 'chalk'
 import { EmbedBuilder, WebhookClient } from 'discord.js'
 import compareAll from '../commands/compare-all'
@@ -38,8 +33,9 @@ export default async function run(cohort: string) {
       created: toNZDate(r.created_at!),
       updated: toNZDate(r.updated_at!),
       pushed: toNZDate(r.pushed_at!),
+      pushedRaw: r.pushed_at,
     }))
-    .filter((r) => isLessThan24HourAgo(r.pushed))
+    .filter((r) => isLessThan24HourAgo(r.pushedRaw))
 
   const allComparisons = await Promise.all(
     recentlyPushedRepos.map(async (repo) => {
@@ -158,7 +154,8 @@ function isLessThan24HourAgo(date: string | null | undefined) {
   if (!date) {
     return undefined
   }
-  const then = new Date(date).getTime()
+  const thenAsDate = new Date(date)
+  const then = thenAsDate.getTime()
   const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000
 
   return then > twentyFourHoursAgo
