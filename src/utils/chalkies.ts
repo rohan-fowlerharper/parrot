@@ -7,11 +7,14 @@ type ExtendedBranchComparison = BranchComparison & {
 }
 
 export const logComparisonResults = (
-  comparisons: ExtendedBranchComparison[]
+  comparisons: ExtendedBranchComparison[],
+  repo?: string,
+  cohort?: string
 ) => {
-  if (comparisons[0]?.repo) {
+  if (repo) {
+    const cohortString = cohort ? `{bold.green ${cohort}}/` : ''
     console.log(
-      chalk`{bold 🦜: Comparison for {green ${comparisons.length}} branches} in {bold.green ${comparisons[0].repo}}`
+      chalk`{bold 🦜: Comparison for {green ${comparisons.length}} branches} in ${cohortString}{bold.green ${repo}}`
     )
   }
   comparisons.forEach((diff) => {

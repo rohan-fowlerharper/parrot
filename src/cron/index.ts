@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import { EmbedBuilder, WebhookClient } from 'discord.js'
+import invariant from 'tiny-invariant'
 import compareAll from '../commands/compare-all'
 import { logComparisonResults } from '../utils/chalkies'
 import { createCompareLinks } from '../utils/compare'
@@ -13,29 +14,22 @@ const ACTIVE_COHORTS = [
   'horoeka-2022',
 ]
 
-export default async function run(cohort: string) {
-  const activeChallenges = await getActiveChallengeNames()
-
-  if (!activeChallenges) return
-
+export default async function run(cohort: string, activeChallenges: string[]) {
   const { data: allRepos } = await github.request('GET /orgs/{org}/repos', {
     org: cohort,
   })
 
   const repos = allRepos.filter((r) => activeChallenges.includes(r.name))
 
-  const toNZDate = (date: string) => new Date(date).toLocaleString('en-NZ')
-
   const recentlyPushedRepos = repos
     .map((r) => ({
       name: r.name,
       url: r.html_url,
-      created: toNZDate(r.created_at!),
-      updated: toNZDate(r.updated_at!),
-      pushed: toNZDate(r.pushed_at!),
-      pushedRaw: r.pushed_at,
+      created: r.created_at!,
+      updated: r.updated_at!,
+      pushed: r.pushed_at!,
     }))
-    .filter((r) => isLessThan24HourAgo(r.pushedRaw))
+    .filter((r) => isLessThan24HourAgo(r.pushed))
 
   const allComparisons = await Promise.all(
     recentlyPushedRepos.map(async (repo) => {
@@ -51,13 +45,15 @@ export default async function run(cohort: string) {
   // TODO: define some metrics for what is a dangerous comparison
   const topComparisons = allComparisons.map((c) => ({
     ...c,
-    comparisons: c.comparisons.slice(-5),
+    comparisons: c.comparisons.slice(-10),
   }))
 
-  console.log(chalk` {bold 🦜: {bold.green ${cohort}}}`)
-  topComparisons.forEach((c) => logComparisonResults(c.comparisons))
+  console.log(chalk`{bold 🦜: {bold.green ${cohort}}}`)
+  topComparisons.forEach((c) =>
+    logComparisonResults(c.comparisons, c.repo, cohort)
+  )
 
-  const alarmBellComparisons = topComparisons
+  const alarmBellComparisons = allComparisons
     .flatMap((c) => {
       const { repo, comparisons } = c
       return comparisons
@@ -79,29 +75,25 @@ export default async function run(cohort: string) {
     .setTitle(`🦜: Cohort Comparison Report for ${cohort}`)
     .setDescription('A report of the last 24 hours of cohort comparisons')
     .setColor('#e91e63')
-    .addFields(
-      {
-        name: 'Link:',
-        value: `
-      [GitHub Actions Report](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})`,
-        inline: true,
-      },
-      {
-        name: 'Date:',
-        value: `${new Date().toLocaleString('en-NZ')} (NZT)`,
-        inline: true,
-      },
-      {
-        name: 'Summary:',
-        value: `${
-          recentlyPushedRepos.length
-        } repos pushed to in the last 24 hours
+    .addFields({
+      name: 'Summary:',
+      value: `${recentlyPushedRepos.length} repos pushed to in the last 24 hours
         ${allComparisons.reduce(
           (acc, c) => acc + c.comparisons.length,
           0
         )} comparisons made`,
-      }
-    )
+      inline: true,
+    })
+
+  // only in CI environment
+  if (GITHUB_SERVER_URL && GITHUB_REPOSITORY && GITHUB_RUN_ID) {
+    summaryEmbed.addFields({
+      name: 'Link:',
+      value: `
+    [GitHub Actions Report](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})`,
+      inline: true,
+    })
+  }
 
   let dangerEmbed
   if (alarmBellComparisons.length > 0) {
@@ -125,6 +117,10 @@ export default async function run(cohort: string) {
           })
           .join('\n')}`
       )
+  }
+
+  if (!dangerEmbed) {
+    summaryEmbed.setTimestamp().setColor('#f294b4')
   }
 
   await webhookClient.send({
@@ -162,8 +158,12 @@ function isLessThan24HourAgo(date: string | null | undefined) {
 }
 
 async function main() {
+  const activeChallenges = await getActiveChallengeNames()
+
+  invariant(activeChallenges, 'Could not get active challenges')
+
   for (const cohort of ACTIVE_COHORTS) {
-    await run(cohort)
+    await run(cohort, activeChallenges)
   }
 }
 main()
