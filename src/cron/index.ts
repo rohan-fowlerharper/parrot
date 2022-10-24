@@ -163,7 +163,7 @@ function isLessThan24HourAgo(date: string | null | undefined) {
 
 async function main() {
   for (const cohort of ACTIVE_COHORTS) {
-    run(cohort)
+    await run(cohort)
   }
 }
 main()
