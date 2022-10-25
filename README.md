@@ -28,6 +28,18 @@ code ~/.parrot/.env # paste github access token here
 parrot <url> [branch] [options] # branch is optional if you provide a url with a branch in it
 ```
 
+## Usages
+
+```sh
+# audit a single challenge with a. one branch or b. all branches
+parrot <url> [branch] [options]
+
+# audit a single branch against all other branches across all challenge repositories in a cohort
+# cohort: must be the url string that appears in a cohort organization, e.g. `aihe-popoto-2022`
+# branch-name: will match any branch containing this string, e.g. `hook` will match `hook` and `hook-captain`
+parrot student <cohort> <branch-name> [options]
+```
+
 ## Options
 
 - `--verbose`, `-v`: Show more information in logs (default: `false`)'
