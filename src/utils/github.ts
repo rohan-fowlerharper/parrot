@@ -20,50 +20,60 @@ export type GithubOptions = {
 export type FilesDiff = Awaited<ReturnType<typeof getDiff>>
 export const getDiff = async (branch: string, options: GithubOptions) => {
   if (branch === options.base) return null
-  const { data } = await github.rest.repos.compareCommits({
-    base: 'main',
-    head: branch,
-    mediaType: {
-      format: 'diff',
-      previews: ['application/vnd.github.v3.diff'],
-    },
-    ...options,
-  })
 
-  const uniqueAuthors = new Set(
-    data.commits.map((c) => c.author?.login ?? c.commit.author?.name)
-  )
-
-  if (!data.files || data.files?.length === 0) {
-    return null
-  }
-
-  const excludedFiles = ['package-lock.json', 'package.json', 'README.md']
-  const filesArray = data.files
-    .filter((f) => f && !excludedFiles.includes(f.filename))
-    .map((f) => ({
-      filename: f.status === 'renamed' ? f.previous_filename! : f.filename,
-      diff: {
-        patch: f.patch,
-        additions: f.patch
-          ?.split('\n')
-          .filter((l) => l.startsWith('+'))
-          .map((l) => l.slice(1)),
-        numberOfAdditions: f.additions,
+  try {
+    const { data } = await github.rest.repos.compareCommits({
+      base: 'main',
+      head: branch,
+      mediaType: {
+        format: 'diff',
+        previews: ['application/vnd.github.v3.diff'],
       },
-    }))
+      ...options,
+    })
 
-  type FileDiff = typeof filesArray[number]
-  const fileMap = new Map<FileDiff['filename'], FileDiff['diff']>()
+    const uniqueAuthors = new Set(
+      data.commits.map((c) => c.author?.login ?? c.commit.author?.name)
+    )
 
-  filesArray.forEach((f) => {
-    fileMap.set(f.filename, f.diff)
-  })
+    if (!data.files || data.files?.length === 0) {
+      return null
+    }
 
-  return {
-    name: branch,
-    files: fileMap,
-    authors: uniqueAuthors,
+    const excludedFiles = ['package-lock.json', 'package.json', 'README.md']
+    const filesArray = data.files
+      .filter((f) => f && !excludedFiles.includes(f.filename))
+      .map((f) => ({
+        filename: f.status === 'renamed' ? f.previous_filename! : f.filename,
+        diff: {
+          patch: f.patch,
+          additions: f.patch
+            ?.split('\n')
+            .filter((l) => l.startsWith('+'))
+            .map((l) => l.slice(1)),
+          numberOfAdditions: f.additions,
+        },
+      }))
+
+    type FileDiff = typeof filesArray[number]
+    const fileMap = new Map<FileDiff['filename'], FileDiff['diff']>()
+
+    filesArray.forEach((f) => {
+      fileMap.set(f.filename, f.diff)
+    })
+
+    return {
+      name: branch,
+      files: fileMap,
+      authors: uniqueAuthors,
+    }
+  } catch (err: any) {
+    console.log({
+      status: err.status,
+      response: err.response,
+      message: err.message,
+    })
+    throw err
   }
 }
 
