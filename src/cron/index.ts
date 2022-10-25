@@ -1,3 +1,4 @@
+import { IncomingWebhook } from '@slack/webhook'
 import chalk from 'chalk'
 import { EmbedBuilder, WebhookClient } from 'discord.js'
 import invariant from 'tiny-invariant'
@@ -70,7 +71,8 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     .flatMap((c) => c.comparisons.filter((c) => c.ratio > 0.8 && !c.isSolo))
     .sort((a, b) => b.ratio - a.ratio)
 
-  const webhookClient = new WebhookClient({
+  // DISCORD MESSAGING
+  const discordWebhook = new WebhookClient({
     url: process.env.DISCORD_WEBHOOK_URL!,
   })
 
@@ -128,12 +130,100 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     summaryEmbed.setTimestamp().setColor('#f294b4')
   }
 
-  await webhookClient.send({
+  await discordWebhook.send({
     content: 'Chirp chirp!',
     avatarURL:
       'https://creazilla-store.fra1.digitaloceanspaces.com/emojis/55483/parrot-emoji-clipart-xl.png',
     embeds: dangerEmbed ? [summaryEmbed, dangerEmbed] : [summaryEmbed],
   })
+
+  // SLACK MESSAGING
+  const slackWebhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL!)
+
+  const slackSummary = {
+    text: `🦜: Cohort Comparison Report for ${cohort}`,
+    attachments: [
+      {
+        color: '#e91e63',
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `A report of the last 24 hours of cohort comparisons`,
+            },
+          },
+          {
+            type: 'section',
+            fields: [
+              {
+                type: 'mrkdwn',
+                text: `*Summary:*\n${
+                  recentlyPushedRepos.length
+                } repos pushed to in the last 24 hours\n${allComparisons.reduce(
+                  (acc, c) => acc + c.comparisons.length,
+                  0
+                )} comparisons made`,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }
+
+  // only in CI environment
+  if (GITHUB_SERVER_URL && GITHUB_REPOSITORY && GITHUB_RUN_ID) {
+    slackSummary?.attachments[0]?.blocks[1]?.fields?.push({
+      type: 'mrkdwn',
+      text: `*Link:*\n<${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|GitHub Actions Report>`,
+    })
+  }
+
+  let slackDanger: any
+  if (alarmBellComparisons.length > 0) {
+    slackDanger = {
+      text: `🚨 Danger Zone 🚨`,
+      attachments: [
+        {
+          color: '#e91e63',
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: `${alarmBellComparisons
+                  .map((c) => {
+                    const [baseLink, comparisonLink] = createCompareLinks({
+                      org: cohort,
+                      repo: c.repo,
+                      comparison: c,
+                    })
+                    return `${toPercentage(c.ratio)} :: <${baseLink}|${
+                      c.base.name
+                    }> ⇔ <${comparisonLink}|${
+                      c.comparison.name
+                    }> :: <https://github.com/${cohort}/${c.repo}/branches|${
+                      c.repo
+                    }>`
+                  })
+                  .join('\n')}`,
+              },
+            },
+          ],
+        },
+      ],
+    }
+  }
+
+  if (!slackDanger) {
+    slackSummary.attachments[0].color = '#f294b4'
+  }
+
+  await slackWebhook.send(slackSummary)
+  if (slackDanger) {
+    await slackWebhook.send(slackDanger)
+  }
 }
 
 // TODO: only select a whitelist of challenge repos
