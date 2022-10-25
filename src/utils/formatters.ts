@@ -5,16 +5,16 @@ export const toFraction = (a: number, b: number) => {
 }
 
 export const getColor = (ratio: number) => {
-  if (ratio > 0.6) {
+  if (ratio > 0.8) {
     return chalk.red.bold
   }
-  if (ratio > 0.4) {
+  if (ratio > 0.55) {
     return chalk.red
   }
-  if (ratio > 0.2) {
+  if (ratio > 0.4) {
     return chalk.yellow
   }
-  if (ratio > 0.1) {
+  if (ratio > 0.3) {
     return chalk.green
   }
   return chalk.gray

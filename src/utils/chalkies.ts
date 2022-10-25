@@ -7,16 +7,8 @@ type ExtendedBranchComparison = BranchComparison & {
 }
 
 export const logComparisonResults = (
-  comparisons: ExtendedBranchComparison[],
-  repo?: string,
-  cohort?: string
+  comparisons: ExtendedBranchComparison[]
 ) => {
-  if (repo) {
-    const cohortString = cohort ? `{bold.green ${cohort}}/` : ''
-    console.log(
-      chalk`{bold 🦜: Comparison for {green ${comparisons.length}} branches} in ${cohortString}{bold.green ${repo}}`
-    )
-  }
   comparisons.forEach((diff) => {
     console.log(
       chalk`${getColor(diff.ratio)(
@@ -24,7 +16,9 @@ export const logComparisonResults = (
           diff.totalNOverlaps,
           diff.totalAdditions
         ).padEnd(9)}`
-      )} :: {bold ${diff.base.name}} --- {bold ${diff.comparison.name}}`
+      )} :: {bold ${diff.base.name}} --- {bold ${diff.comparison.name} ${
+        diff.isSolo ? '(SOLO)' : ''
+      }}`
     )
   })
 }

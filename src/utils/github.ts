@@ -30,6 +30,10 @@ export const getDiff = async (branch: string, options: GithubOptions) => {
     ...options,
   })
 
+  const uniqueAuthors = new Set(
+    data.commits.map((c) => c.author?.login ?? c.commit.author?.name)
+  )
+
   if (!data.files || data.files?.length === 0) {
     return null
   }
@@ -59,6 +63,7 @@ export const getDiff = async (branch: string, options: GithubOptions) => {
   return {
     name: branch,
     files: fileMap,
+    authors: uniqueAuthors,
   }
 }
 

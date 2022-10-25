@@ -35,7 +35,7 @@ export default async function compareOne({
 
   const diffsToCompare = await Promise.all(
     branchNames.map(async (curr) => {
-      if (curr === branchToCompare) return null
+      if (curr === branchToCompare || curr === 'main') return null
       return getDiff(curr, { owner: owner, repo })
     })
   ).then(filterNullDiffs)

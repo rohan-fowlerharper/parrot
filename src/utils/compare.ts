@@ -24,14 +24,11 @@ export const compareTwoBranches = (
 
     let nOverlaps = 0
     for (const line of baseDiff.additions) {
-      /**
-       * TODO: use a real algo
-       * this is just a naive approach for now; most lines with just '}' will match
-       */
       if (comparisonDiff.additions.includes(line)) {
         nOverlaps++
       }
     }
+
     if (flags.verbose) {
       const ratio = nOverlaps / baseDiff.numberOfAdditions
       console.log(
@@ -44,10 +41,15 @@ export const compareTwoBranches = (
     totalNOverlaps += nOverlaps
   }
 
-  let totalAdditions = 0
+  let baseTotalAdditions = 0
   for (const [, diff] of base.files) {
-    totalAdditions += diff.numberOfAdditions
+    baseTotalAdditions += diff.numberOfAdditions
   }
+  let comparisonTotalAdditions = 0
+  for (const [, diff] of comparison.files) {
+    comparisonTotalAdditions += diff.numberOfAdditions
+  }
+  const totalAdditions = Math.max(baseTotalAdditions, comparisonTotalAdditions)
 
   if (flags.verbose) {
     const ratio = totalNOverlaps / totalAdditions
@@ -63,7 +65,10 @@ export const compareTwoBranches = (
     )
   }
 
+  const isSolo = isSoloBranch(base, comparison)
+
   return {
+    isSolo,
     base,
     comparison,
     ratio: totalNOverlaps / totalAdditions,
@@ -91,4 +96,11 @@ export const createCompareLinks = ({
     `${baseUrl}main...${comparison.base.name}`,
     `${baseUrl}main...${comparison.comparison.name}`,
   ]
+}
+
+const isSoloBranch = (
+  b1: NonNullable<FilesDiff>,
+  b2: NonNullable<FilesDiff>
+) => {
+  return [...b1.authors].some((f) => b2.authors.has(f))
 }

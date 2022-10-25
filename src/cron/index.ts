@@ -17,8 +17,8 @@ const ACTIVE_COHORTS = [
 export default async function run(cohort: string, activeChallenges: string[]) {
   const { data: allRepos } = await github.request('GET /orgs/{org}/repos', {
     org: cohort,
+    per_page: 100,
   })
-
   const repos = allRepos.filter((r) => activeChallenges.includes(r.name))
 
   const recentlyPushedRepos = repos
@@ -31,38 +31,43 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     }))
     .filter((r) => isLessThan24HourAgo(r.pushed))
 
+  console.log(`🦜: ${cohort} has ${allRepos.length} repos`)
+
   const allComparisons = await Promise.all(
     recentlyPushedRepos.map(async (repo) => {
       const comparisons = await compareAll({
         owner: cohort,
         repo: repo.name,
       })
-      return { repo: repo.name, comparisons }
+      return {
+        repo: repo.name,
+        comparisons: comparisons.map((c) => ({
+          ...c,
+          repo: repo.name,
+        })),
+      }
     })
   )
 
   // NOTE: probably should console log all the comparisons (for record keeping)
   // TODO: define some metrics for what is a dangerous comparison
+  const topN = 20
   const topComparisons = allComparisons.map((c) => ({
     ...c,
-    comparisons: c.comparisons.slice(-10),
+    comparisons: c.comparisons.slice(-topN).filter((c) => !c.isSolo),
   }))
 
   console.log(chalk`{bold 🦜: {bold.green ${cohort}}}`)
-  topComparisons.forEach((c) =>
-    logComparisonResults(c.comparisons, c.repo, cohort)
-  )
+  topComparisons.forEach(({ repo, comparisons }) => {
+    if (comparisons.length === 0) return
+    console.log(
+      chalk`🦜: Comparison for top {bold.green ${topN}} branches in {bold.green ${cohort}}/{bold.green ${repo}}`
+    )
+    logComparisonResults(comparisons)
+  })
 
   const alarmBellComparisons = allComparisons
-    .flatMap((c) => {
-      const { repo, comparisons } = c
-      return comparisons
-        .filter((c) => c.ratio > 0.9)
-        .map((c) => ({
-          ...c,
-          repo,
-        }))
-    })
+    .flatMap((c) => c.comparisons.filter((c) => c.ratio > 0.8 && !c.isSolo))
     .sort((a, b) => b.ratio - a.ratio)
 
   const webhookClient = new WebhookClient({
