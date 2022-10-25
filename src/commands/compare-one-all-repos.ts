@@ -41,7 +41,7 @@ export default async function compareOneAllRepos({
   const repos = allRepos.filter((r) => activeChallenges.includes(r.name))
 
   console.log(
-    `🦜: Checking ${repos.length} repos for branches containing {green ${studentBranchName}}... This may take some time.`
+    chalk`🦜: Checking ${repos.length} repos for branches containing {green ${studentBranchName}}... This may take some time.`
   )
 
   const results = new Map<string, BranchComparison[]>()
