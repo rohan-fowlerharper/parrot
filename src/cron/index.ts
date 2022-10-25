@@ -6,7 +6,7 @@ import compareAll from '../commands/compare-all'
 import { logComparisonResults } from '../utils/chalkies'
 import { createCompareLinks } from '../utils/compare'
 import { toPercentage } from '../utils/formatters'
-import { github } from '../utils/github'
+import { getActiveChallengeNames, github } from '../utils/github'
 
 const ACTIVE_COHORTS = [
   'aihe-ahoaho-2022',
@@ -227,19 +227,6 @@ export default async function run(cohort: string, activeChallenges: string[]) {
 }
 
 // TODO: only select a whitelist of challenge repos
-const getActiveChallengeNames = async () => {
-  const { data: challenges } = await github.rest.repos.getContent({
-    owner: 'dev-academy-challenges',
-    repo: 'challenges',
-    path: 'packages',
-  })
-
-  if (!Array.isArray(challenges)) {
-    return
-  }
-
-  return challenges.map((c) => c.name).filter((c) => !c.includes('solution'))
-}
 
 function isLessThan24HourAgo(date: string | null | undefined) {
   if (!date) {

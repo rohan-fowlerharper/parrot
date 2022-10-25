@@ -13,12 +13,12 @@ export default async function compareOne({
   branch: branchToCompare,
   owner,
   repo,
-  flags,
+  flags = { verbose: false },
 }: {
   branch: string
   owner: string
   repo: string
-  flags: {
+  flags?: {
     verbose: boolean
   }
 }) {

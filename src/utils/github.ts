@@ -118,3 +118,17 @@ export const processGithubUrl = (
   }
   return { org, repo }
 }
+
+export const getActiveChallengeNames = async () => {
+  const { data: challenges } = await github.rest.repos.getContent({
+    owner: 'dev-academy-challenges',
+    repo: 'challenges',
+    path: 'packages',
+  })
+
+  if (!Array.isArray(challenges)) {
+    return
+  }
+
+  return challenges.map((c) => c.name).filter((c) => !c.includes('solution'))
+}

@@ -9,6 +9,7 @@ import invariant from 'tiny-invariant'
 import chalk from 'chalk'
 import { endLog, logComparisonResults } from './src/utils/chalkies'
 import { BranchComparison, createCompareLinks } from './src/utils/compare'
+import compareOneAllRepos from './src/commands/compare-one-all-repos'
 
 yargs(process.argv.slice(2))
   .usage(`Usage: ${appName ?? '$0'} <url> [branch]`)
@@ -119,6 +120,38 @@ yargs(process.argv.slice(2))
     },
     (argv) => {
       init({ token: argv.token as string | undefined })
+    }
+  )
+  .command(
+    'student <cohort> <name>',
+    `compare student's commits across all repositories in a cohort`,
+    (yargs) => {
+      yargs
+        .positional('cohort', {
+          type: 'string',
+          describe: 'cohort name',
+        })
+        .positional('name', {
+          type: 'string',
+          describe: 'student branch name (this can be a partial match)',
+        })
+    },
+    async (argv) => {
+      const cohort = argv.cohort as string
+      const studentBranch = argv.name as string
+
+      const comparisonsMap = await compareOneAllRepos({
+        owner: cohort,
+        branch: studentBranch,
+        flags: {
+          verbose: argv.verbose as boolean,
+        },
+      })
+
+      for (const [repo, comparisons] of comparisonsMap) {
+        console.log(chalk.bold`🦜: Comparisons for {green ${repo}}:`)
+        logComparisonResults(comparisons)
+      }
     }
   )
   .help()
