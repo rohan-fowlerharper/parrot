@@ -17,8 +17,23 @@ export type GithubOptions = {
   base?: string
 }
 
-export type FilesDiff = Awaited<ReturnType<typeof getDiff>>
-export const getDiff = async (branch: string, options: GithubOptions) => {
+export type FilesDiff = Promise<{
+  name: string
+  files: Map<
+    string,
+    {
+      patch: string | undefined
+      additions: string[] | undefined
+      numberOfAdditions: number
+    }
+  >
+  authors: Set<string | undefined>
+} | null>
+
+export const getDiff = async (
+  branch: string,
+  options: GithubOptions
+): FilesDiff => {
   if (branch === options.base) return null
 
   try {
@@ -68,11 +83,18 @@ export const getDiff = async (branch: string, options: GithubOptions) => {
       authors: uniqueAuthors,
     }
   } catch (err: any) {
-    console.log({
-      status: err.status,
-      response: err.response,
-      message: err.message,
-    })
+    if (err.status === 404) {
+      // this can happen when a branch has diverged histories from main
+      return null
+    }
+
+    if (err.status === 403 && err.message.includes('secondary rate limit')) {
+      const retryAfter = err.response.headers['retry-after']
+      console.log('Rate limit exceeded, retrying in', retryAfter, 'seconds')
+      await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000))
+      return getDiff(branch, options)
+    }
+
     throw err
   }
 }
