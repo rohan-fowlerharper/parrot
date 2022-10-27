@@ -17,7 +17,7 @@ export type GithubOptions = {
   base?: string
 }
 
-export type FilesDiff = Promise<{
+export type FilesDiff = {
   name: string
   files: Map<
     string,
@@ -28,12 +28,12 @@ export type FilesDiff = Promise<{
     }
   >
   authors: Set<string | undefined>
-} | null>
+} | null
 
 export const getDiff = async (
   branch: string,
   options: GithubOptions
-): FilesDiff => {
+): Promise<FilesDiff> => {
   if (branch === options.base) return null
 
   try {
