@@ -27,10 +27,19 @@
     "yargs": "^17.6.0"
   },
   "devDependencies": {
+    "@devacademy/eslint-config": "^1.4.0",
     "@types/node": "^18.7.23",
     "@types/yargs": "^17.0.13",
     "@vercel/node": "^2.5.22",
+    "eslint": "^8.26.0",
     "vercel": "^28.4.8"
+  },
+  "eslintConfig": {
+    "extends": "@devacademy/eslint-config/core"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
   },
   "overrides": {
     "@vercel/node": {
