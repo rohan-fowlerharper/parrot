@@ -20,9 +20,7 @@ export const getColor = (ratio: number) => {
   return chalk.gray
 }
 
-export function toPercentage(a: number, b: number): string
-export function toPercentage(a: number): string
-export function toPercentage(a: number, b?: number) {
+export function toPercentage(a: number, b?: number): string {
   if (b !== undefined) {
     return `${((a / b) * 100).toFixed(1)}%`
   }

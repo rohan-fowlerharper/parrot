@@ -5,7 +5,6 @@ import {
   github,
 } from '../utils/github'
 import invariant from 'tiny-invariant'
-import compareOne from './compare-one'
 import {
   BranchComparison,
   compareTwoBranches,
