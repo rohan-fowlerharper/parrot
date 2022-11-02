@@ -5,7 +5,7 @@ import invariant from 'tiny-invariant'
 import compareAll from '../commands/compare-all'
 import { logComparisonResults } from '../utils/chalkies'
 import { createCompareLinks } from '../utils/compare'
-import { toPercentage } from '../utils/formatters'
+import { toFraction, toPercentage } from '../utils/formatters'
 import { getActiveChallengeNames, github } from '../utils/github'
 
 const ACTIVE_COHORTS = [
@@ -116,11 +116,14 @@ export default async function run(cohort: string, activeChallenges: string[]) {
               repo: c.repo,
               comparison: c,
             })
-            return `${toPercentage(c.ratio)} :: [${
-              c.base.name
-            }](${baseLink}) ⇔ [${c.comparison.name}](${comparisonLink}) :: [${
+            return `${toPercentage(c.ratio)} (${toFraction(
+              c.totalNOverlaps,
+              c.totalAdditions
+            )}) :: [${c.base.name}](${baseLink}) ⇔ [${
+              c.comparison.name
+            }](${comparisonLink}) :: [${c.repo}](https://github.com/${cohort}/${
               c.repo
-            }](https://github.com/${cohort}/${c.repo}/branches)`
+            }/branches)`
           })
           .join('\n')}`
       )
@@ -199,9 +202,10 @@ export default async function run(cohort: string, activeChallenges: string[]) {
                       repo: c.repo,
                       comparison: c,
                     })
-                    return `${toPercentage(c.ratio)} :: <${baseLink}|${
-                      c.base.name
-                    }> ⇔ <${comparisonLink}|${
+                    return `${toPercentage(c.ratio)} (${toFraction(
+                      c.totalNOverlaps,
+                      c.totalAdditions
+                    )}) :: <${baseLink}|${c.base.name}> ⇔ <${comparisonLink}|${
                       c.comparison.name
                     }> :: <https://github.com/${cohort}/${c.repo}/branches|${
                       c.repo
