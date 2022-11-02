@@ -48,7 +48,7 @@ export default async function compareOneAllRepos({
     const branchNames = await getBranchNames(cohort, repo.name)
 
     const matchingBranches = branchNames.filter((b) =>
-      b.includes(studentBranchName)
+      b.toLowerCase().includes(studentBranchName)
     )
 
     if (matchingBranches.length === 0) {
