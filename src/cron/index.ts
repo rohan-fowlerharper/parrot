@@ -6,7 +6,7 @@ import compareAll from '../commands/compare-all'
 import { logComparisonResults } from '../utils/chalkies'
 import { createCompareLinks } from '../utils/compare'
 import { toFraction, toPercentage } from '../utils/formatters'
-import { getActiveChallengeNames, github } from '../utils/github'
+import { getActiveChallengeNames, getAllRepos } from '../utils/github'
 
 const ACTIVE_COHORTS = [
   'aihe-ahoaho-2022',
@@ -16,10 +16,7 @@ const ACTIVE_COHORTS = [
 ]
 
 export default async function run(cohort: string, activeChallenges: string[]) {
-  const { data: allRepos } = await github.request('GET /orgs/{org}/repos', {
-    org: cohort,
-    per_page: 100,
-  })
+  const { data: allRepos } = await getAllRepos(cohort)
   const repos = allRepos.filter((r) => activeChallenges.includes(r.name))
 
   const recentlyPushedRepos = repos

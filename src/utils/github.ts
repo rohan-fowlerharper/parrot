@@ -99,6 +99,27 @@ export const getDiff = async (
   }
 }
 
+export const getAllRepos = async (cohort: string) => {
+  try {
+    return github.request('GET /orgs/{org}/repos', {
+      org: cohort,
+      per_page: 100,
+    })
+  } catch (err: any) {
+    if (err.status === 403 && err.message.includes('secondary rate limit')) {
+      const retryAfter = err.response.headers['retry-after']
+      console.log('Rate limit exceeded, retrying in', retryAfter, 'seconds')
+      await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000))
+      return github.request('GET /orgs/{org}/repos', {
+        org: cohort,
+        per_page: 100,
+      })
+    }
+
+    throw err
+  }
+}
+
 export const getBranchNames = async (owner: string, repo: string) => {
   const { data: branches } = await github.rest.repos.listBranches({
     owner,
