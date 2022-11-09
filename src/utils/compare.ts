@@ -30,7 +30,7 @@ export const compareTwoBranches = (
     }
 
     if (flags.verbose) {
-      const ratio = nOverlaps / baseDiff.numberOfAdditions
+      const ratio = nOverlaps / baseDiff.numberOfAdditions || 0
       console.log(
         getColor(ratio)(
           `${filename}: ${nOverlaps}/${baseDiff.numberOfAdditions}`
@@ -52,7 +52,7 @@ export const compareTwoBranches = (
   const totalAdditions = Math.max(baseTotalAdditions, comparisonTotalAdditions)
 
   if (flags.verbose) {
-    const ratio = totalNOverlaps / totalAdditions
+    const ratio = totalNOverlaps / totalAdditions || 0
     const color = getColor(ratio)
 
     console.log(
@@ -66,12 +66,13 @@ export const compareTwoBranches = (
   }
 
   const isSolo = isSoloBranch(base, comparison)
+  const ratio = totalNOverlaps / totalAdditions || 0
 
   return {
     isSolo,
     base,
     comparison,
-    ratio: totalNOverlaps / totalAdditions,
+    ratio,
     totalNOverlaps,
     totalAdditions,
   }

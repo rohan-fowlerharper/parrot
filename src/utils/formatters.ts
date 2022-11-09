@@ -23,6 +23,7 @@ export const getColor = (ratio: number) => {
 export function toPercentage(a: number, b?: number): string {
   if (b !== undefined) {
     const ratio = a / b || 0
+    console.log(ratio)
     return `${(ratio * 100).toFixed(1)}%`
   }
   return `${(a * 100).toFixed(1)}%`
