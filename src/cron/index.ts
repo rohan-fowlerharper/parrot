@@ -5,8 +5,8 @@ import invariant from 'tiny-invariant'
 import compareAll from '../commands/compare-all'
 import { logComparisonResults } from '../utils/chalkies'
 import { createCompareLinks } from '../utils/compare'
-import { toFraction, toPercentage } from '../utils/formatters'
 import { getActiveChallengeNames, getAllRepos } from '../utils/github'
+import { sortByRatio, toFraction, toPercentage } from '../utils/formatters'
 
 const ACTIVE_COHORTS = [
   'aihe-ahoaho-2022',
@@ -18,6 +18,10 @@ const ACTIVE_COHORTS = [
 export default async function run(cohort: string, activeChallenges: string[]) {
   const { data: allRepos } = await getAllRepos(cohort)
   const repos = allRepos.filter((r) => activeChallenges.includes(r.name))
+  const isMonday =
+    new Date().toLocaleDateString('en-NZ', {
+      weekday: 'long',
+    }) === 'Monday'
 
   const recentlyPushedRepos = repos
     .map((r) => ({
@@ -27,7 +31,7 @@ export default async function run(cohort: string, activeChallenges: string[]) {
       updated: r.updated_at!,
       pushed: r.pushed_at!,
     }))
-    .filter((r) => isLessThan24HourAgo(r.pushed))
+    .filter((r) => isLessThanXHoursAgo(r.pushed, isMonday ? 72 : 24))
 
   console.log(`🦜: ${cohort} has ${allRepos.length} repos`)
 
@@ -65,8 +69,26 @@ export default async function run(cohort: string, activeChallenges: string[]) {
   })
 
   const alarmBellComparisons = allComparisons
-    .flatMap((c) => c.comparisons.filter((c) => c.ratio > 0.8 && !c.isSolo))
-    .sort((a, b) => b.ratio - a.ratio)
+    .flatMap((c) =>
+      c.comparisons
+        .filter((c) => c.ratio > 0.8 && !c.isSolo)
+        .filter((c) => {
+          const { base, comparison } = c
+          if (!base.pushedAt || !comparison.pushedAt) {
+            return true
+          }
+          if (
+            isLessThan72HoursAgo(base.pushedAt) ||
+            isLessThan72HoursAgo(comparison.pushedAt)
+          ) {
+            return true
+          }
+          return false
+        })
+    )
+    .sort(sortByRatio)
+
+  console.log(alarmBellComparisons)
 
   // DISCORD MESSAGING
   const discordWebhook = new WebhookClient({
@@ -130,12 +152,12 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     summaryEmbed.setTimestamp().setColor('#f294b4')
   }
 
-  await discordWebhook.send({
-    content: 'Chirp chirp!',
-    avatarURL:
-      'https://creazilla-store.fra1.digitaloceanspaces.com/emojis/55483/parrot-emoji-clipart-xl.png',
-    embeds: dangerEmbed ? [summaryEmbed, dangerEmbed] : [summaryEmbed],
-  })
+  // await discordWebhook.send({
+  //   content: 'Chirp chirp!',
+  //   avatarURL:
+  //     'https://creazilla-store.fra1.digitaloceanspaces.com/emojis/55483/parrot-emoji-clipart-xl.png',
+  //   embeds: dangerEmbed ? [summaryEmbed, dangerEmbed] : [summaryEmbed],
+  // })
 
   // SLACK MESSAGING
   const slackWebhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL!)
@@ -221,23 +243,34 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     slackSummary.attachments[0].color = '#f294b4'
   }
 
-  await slackWebhook.send(slackSummary)
-  if (slackDanger) {
-    await slackWebhook.send(slackDanger)
-  }
+  // await slackWebhook.send(slackSummary)
+  // if (slackDanger) {
+  //   await slackWebhook.send(slackDanger)
+  // }
 }
 
 // TODO: only select a whitelist of challenge repos
 
-function isLessThan24HourAgo(date: string | null | undefined) {
+function isLessThanXHoursAgo(
+  date: string | null | undefined,
+  numHours: number
+) {
   if (!date) {
     return undefined
   }
   const thenAsDate = new Date(date)
   const then = thenAsDate.getTime()
-  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000
+  const xHoursAgo = Date.now() - numHours * 60 * 60 * 1000
 
-  return then > twentyFourHoursAgo
+  return then > xHoursAgo
+}
+
+function isLessThan24HoursAgo(date: string | null | undefined) {
+  return isLessThanXHoursAgo(date, 24)
+}
+
+function isLessThan72HoursAgo(date: string | null | undefined) {
+  return isLessThanXHoursAgo(date, 72)
 }
 
 async function main() {

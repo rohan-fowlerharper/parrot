@@ -28,6 +28,7 @@ export type FilesDiff = {
     }
   >
   authors: Set<string | undefined>
+  pushedAt: string | undefined
 } | null
 
 export const getDiff = async (
@@ -81,6 +82,7 @@ export const getDiff = async (
       name: branch,
       files: fileMap,
       authors: uniqueAuthors,
+      pushedAt: data.commits[0].commit.author?.date,
     }
   } catch (err: any) {
     if (err.status === 404) {
