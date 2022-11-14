@@ -152,12 +152,12 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     summaryEmbed.setTimestamp().setColor('#f294b4')
   }
 
-  // await discordWebhook.send({
-  //   content: 'Chirp chirp!',
-  //   avatarURL:
-  //     'https://creazilla-store.fra1.digitaloceanspaces.com/emojis/55483/parrot-emoji-clipart-xl.png',
-  //   embeds: dangerEmbed ? [summaryEmbed, dangerEmbed] : [summaryEmbed],
-  // })
+  await discordWebhook.send({
+    content: 'Chirp chirp!',
+    avatarURL:
+      'https://creazilla-store.fra1.digitaloceanspaces.com/emojis/55483/parrot-emoji-clipart-xl.png',
+    embeds: dangerEmbed ? [summaryEmbed, dangerEmbed] : [summaryEmbed],
+  })
 
   // SLACK MESSAGING
   const slackWebhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL!)
@@ -243,10 +243,10 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     slackSummary.attachments[0].color = '#f294b4'
   }
 
-  // await slackWebhook.send(slackSummary)
-  // if (slackDanger) {
-  //   await slackWebhook.send(slackDanger)
-  // }
+  await slackWebhook.send(slackSummary)
+  if (slackDanger) {
+    await slackWebhook.send(slackDanger)
+  }
 }
 
 // TODO: only select a whitelist of challenge repos
