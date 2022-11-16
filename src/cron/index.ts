@@ -265,10 +265,6 @@ function isLessThanXHoursAgo(
   return then > xHoursAgo
 }
 
-function isLessThan24HoursAgo(date: string | null | undefined) {
-  return isLessThanXHoursAgo(date, 24)
-}
-
 function isLessThan72HoursAgo(date: string | null | undefined) {
   return isLessThanXHoursAgo(date, 72)
 }
