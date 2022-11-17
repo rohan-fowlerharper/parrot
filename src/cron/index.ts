@@ -95,7 +95,8 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     url: process.env.DISCORD_WEBHOOK_URL!,
   })
 
-  const { GITHUB_SERVER_URL, GITHUB_REPOSITORY, GITHUB_RUN_ID } = process.env
+  const { GITHUB_SERVER_URL, GITHUB_REPOSITORY, GITHUB_RUN_ID, GITHUB_JOB } =
+    process.env
 
   const summaryEmbed = new EmbedBuilder()
     .setTitle(`🦜: Cohort Comparison Report for ${cohort}`)
@@ -116,7 +117,7 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     summaryEmbed.addFields({
       name: 'Link:',
       value: `
-    [GitHub Actions Report](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})`,
+    [GitHub Actions Report](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs/${GITHUB_JOB})`,
       inline: true,
     })
   }
@@ -198,7 +199,7 @@ export default async function run(cohort: string, activeChallenges: string[]) {
   if (GITHUB_SERVER_URL && GITHUB_REPOSITORY && GITHUB_RUN_ID) {
     slackSummary?.attachments[0]?.blocks[1]?.fields?.push({
       type: 'mrkdwn',
-      text: `*Link:*\n<${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|GitHub Actions Report>`,
+      text: `*Link:*\n<${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs/${GITHUB_JOB}|GitHub Actions Report>`,
     })
   }
 
