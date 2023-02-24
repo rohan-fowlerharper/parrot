@@ -2,7 +2,7 @@ name: daily-cron
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 19 * * 0-4' # 8:30 AM NZDT Mon-Fri (UTC+13)
+    - cron: '30 19 * * 0' # 8:30 AM NZDT Monday (UTC+13)
 jobs:
   cron:
     runs-on: ubuntu-latest
