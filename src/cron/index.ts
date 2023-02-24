@@ -8,20 +8,11 @@ import { createCompareLinks } from '../utils/compare'
 import { getActiveChallengeNames, getAllRepos } from '../utils/github'
 import { sortByRatio, toFraction, toPercentage } from '../utils/formatters'
 
-const ACTIVE_COHORTS = [
-  'aihe-ahoaho-2022',
-  'aihe-popoto-2022',
-  'hihi-2022',
-  'horoeka-2022',
-]
+const ACTIVE_COHORTS = ['tohora-2023', 'harakeke-2023', 'kahu-2023']
 
 export default async function run(cohort: string, activeChallenges: string[]) {
   const { data: allRepos } = await getAllRepos(cohort)
   const repos = allRepos.filter((r) => activeChallenges.includes(r.name))
-  const isMonday =
-    new Date().toLocaleDateString('en-NZ', {
-      weekday: 'long',
-    }) === 'Monday'
 
   const recentlyPushedRepos = repos
     .map((r) => ({
@@ -31,7 +22,7 @@ export default async function run(cohort: string, activeChallenges: string[]) {
       updated: r.updated_at!,
       pushed: r.pushed_at!,
     }))
-    .filter((r) => isLessThanXHoursAgo(r.pushed, isMonday ? 72 : 24))
+    .filter((r) => isLessThan7DaysAgo(r.pushed))
 
   console.log(`🦜: ${cohort} has ${allRepos.length} repos`)
 
@@ -78,8 +69,8 @@ export default async function run(cohort: string, activeChallenges: string[]) {
             return true
           }
           if (
-            isLessThan72HoursAgo(base.pushedAt) ||
-            isLessThan72HoursAgo(comparison.pushedAt)
+            isLessThan7DaysAgo(base.pushedAt) ||
+            isLessThan7DaysAgo(comparison.pushedAt)
           ) {
             return true
           }
@@ -88,8 +79,14 @@ export default async function run(cohort: string, activeChallenges: string[]) {
     )
     .sort(sortByRatio)
 
-  console.log(alarmBellComparisons)
+  // console.log(alarmBellComparisons)
 
+  if (!process.env.DISCORD_WEBHOOK_URL || !process.env.SLACK_WEBHOOK_URL) {
+    console.log(
+      chalk`{bold.red 🦜: Missing DISCORD_WEBHOOK_URL or SLACK_WEBHOOK_URL, skipping messaging}`
+    )
+    return
+  }
   // DISCORD MESSAGING
   const discordWebhook = new WebhookClient({
     url: process.env.DISCORD_WEBHOOK_URL!,
@@ -266,8 +263,8 @@ function isLessThanXHoursAgo(
   return then > xHoursAgo
 }
 
-function isLessThan72HoursAgo(date: string | null | undefined) {
-  return isLessThanXHoursAgo(date, 72)
+function isLessThan7DaysAgo(date: string | null | undefined) {
+  return isLessThanXHoursAgo(date, 7 * 24)
 }
 
 async function main() {
