@@ -8,7 +8,7 @@ import { createCompareLinks } from '../utils/compare'
 import { getActiveChallengeNames, getAllRepos } from '../utils/github'
 import { sortByRatio, toFraction, toPercentage } from '../utils/formatters'
 
-const ACTIVE_COHORTS = ['tohora-2023', 'harakeke-2023', 'kahu-2023']
+const ACTIVE_COHORTS = ['whai-2023', 'kahikatea-2023', 'piwakawaka-2023']
 
 export default async function run(cohort: string, activeChallenges: string[]) {
   const { data: allRepos } = await getAllRepos(cohort)
